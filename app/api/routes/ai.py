@@ -39,7 +39,17 @@ async def ai_test(
     context = search_context(request.prompt, db)
 
     if not context:
-        return AIResponse(result="No relevant information found.")
+        result = "No relevant information found."
+        tokens = 0
+
+        save_usage(
+            request.prompt,
+            result,
+            tokens,
+            user_id=current_user["id"]
+        )
+
+        return AIResponse(result=result)
 
     full_prompt = f"""
     You are an AI that answers ONLY based on the proveded context.
@@ -67,6 +77,13 @@ async def ai_test(
 
     if not result:
         result = "I don't know."
+
+    save_usage(
+        request.prompt,
+        result,
+        tokens,
+        user_id=current_user["id"]
+    )
 
     return AIResponse(result=result)
 

@@ -4,3 +4,4 @@ sqlalchemy
 alembic
 openai
 python-dotenv
+python-multipart
