@@ -13,6 +13,22 @@ from app.models.document import Document
 
 router = APIRouter()
 
+
+@router.post("/seed")
+def seed(db: Session = Depends(get_db)):
+    samples = [
+        "FastAPI JWT エラーは9割SECRET_KEYが原因",
+        "JWTの検証エラーはtokenの署名不一致が原因",
+    ]
+
+    for text in samples:
+        db.add(Document(content=text))
+
+    db.commit()
+
+    return {"message": "seeded"}
+
+
 @router.post("/ai/test")
 async def ai_test(
     request: AIRequest,
