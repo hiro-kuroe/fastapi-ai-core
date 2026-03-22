@@ -181,12 +181,6 @@ This project prioritizes:
 
 ---
 
-## 🔗 GitHub
-
-https://github.com/hiro-kuroe/fastapi-ai-core
-
----
-
 ## 📫 Contact
 
 fastapienne@gmail.com
