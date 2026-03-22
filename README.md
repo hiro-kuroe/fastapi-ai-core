@@ -181,6 +181,13 @@ This project prioritizes:
 
 ---
 
+### Notes
+
+File upload endpoints depend on `python-multipart`.  
+Make sure it is installed via `requirements.txt`.
+
+---
+
 ## 📫 Contact
 
 fastapienne@gmail.com
