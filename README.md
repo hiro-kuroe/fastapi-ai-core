@@ -1,22 +1,22 @@
 # 🚀 fastapi-ai-core
 
-Production-ready FastAPI backend for AI-powered applications.  
-Includes OpenAI integration, usage tracking, and Dockerized deployment.
+FastAPI-based backend for building AI-powered applications.
+
+This project focuses on **reliable backend behavior**, not just calling an AI API.
 
 ---
 
 ## 🔥 Why This Exists
 
-Most "AI APIs" are just wrappers around OpenAI.
+Most "AI APIs" are simple wrappers around OpenAI.
 
-This project is different.
+This project takes a different approach.
 
-It is designed as a **real backend foundation for monetizable AI services**, including:
+It is built as a **backend foundation for real-world usage**, where:
 
-- Usage tracking (token-based)
-- User-level data handling (extensible)
-- Clean service-layer architecture
-- Ready for billing integration (Stripe-ready structure)
+- Responses must be explainable
+- Incorrect answers must be avoided
+- System behavior must be predictable
 
 ---
 
@@ -36,8 +36,29 @@ It is designed as a **real backend foundation for monetizable AI services**, inc
 - AI text generation via OpenAI
 - Token usage logging (per request)
 - Database persistence (SQLite)
-- Service-layer separation (production style)
-- Dockerized environment (ready to deploy)
+- Service-layer separation
+- Dockerized environment
+
+---
+
+## 🧠 Context-Based Answering (Lightweight RAG)
+
+Instead of relying on model knowledge, this system:
+
+- Retrieves relevant data from a database
+- Injects it into the prompt
+- Forces the model to answer **only from that context**
+
+### Key behaviors
+
+- Japanese query handling (simple tokenization + stop-word removal)
+- AND search with OR fallback
+- No-context fallback:
+  
+      "I don't know"
+      "No relevant information found."
+
+This avoids hallucinated answers and keeps responses grounded.
 
 ---
 
@@ -70,12 +91,36 @@ It is designed as a **real backend foundation for monetizable AI services**, inc
 ### POST /ai/test
 
     {
-      "prompt": "Did Docker setup succeed?"
+      "prompt": "Why does FastAPI JWT fail?"
     }
+
+### Natural Language Input
+
+    "あのさ、FastAPIのJWTのエラーってなんで起きるの？"
+
+→ The system extracts keywords and returns an answer based on stored data.
 
 ---
 
-## 🗃️ Usage Logging (Core Feature)
+## 🧪 Initial Data Setup (Important)
+
+This project uses DB-based context retrieval.
+
+If the database is empty, the AI will return:
+
+    "No relevant information found."
+
+To test the system, you need to insert sample data.
+
+Example:
+
+    FastAPI JWT エラーは9割SECRET_KEYが原因
+
+You can add data via API or directly in the database.
+
+---
+
+## 🗃️ Usage Logging
 
 Each request is stored with:
 
@@ -89,7 +134,7 @@ This enables:
 
 - Cost tracking
 - Usage-based billing
-- Analytics
+- Basic analytics
 
 ---
 
@@ -99,7 +144,7 @@ Temporary user injection:
 
     {"id": 1}
 
-Designed for easy upgrade to:
+Designed to be extended to:
 
 - JWT authentication
 - Role-based access
@@ -107,34 +152,44 @@ Designed for easy upgrade to:
 
 ---
 
-## 💡 Real-World Use Cases
+## 💡 Use Cases
 
-- SaaS AI backend
-- Internal company AI tools
-- Chat-based services
-- Token-based billing systems
+- Internal AI tools
+- FAQ systems with controlled answers
+- SaaS AI backends
+- Cost-aware AI services
 
 ---
 
 ## 🚧 Roadmap
 
 - JWT authentication
-- Stripe subscription integration
-- Token quota enforcement
-- Streaming responses (real-time AI)
-- RAG (Retrieval-Augmented Generation)
+- Stripe integration
+- Token quota control
+- Streaming responses
+- Vector-based search (embeddings)
 
 ---
 
-## 🧠 Architecture Philosophy
+## 🧠 Design Approach
 
-This is not a demo.
+This project prioritizes:
 
-This is a **foundation for production AI systems**:
+- Predictable behavior over "smart" responses
+- Search reliability over model guessing
+- Simple architecture that can be extended later
 
-- Clean separation of concerns
-- Extendable service layer
-- Designed for scaling and monetization
+---
+
+## 🔗 GitHub
+
+https://github.com/hiro-kuroe/fastapi-ai-core
+
+---
+
+## 📫 Contact
+
+fastapienne@gmail.com
 
 ---
 
