@@ -6,14 +6,33 @@ import re
 from sqlalchemy import or_
 
 
-def save_usage(prompt: str, response: str, total_tokens: int = None, user_id: int = None):
-    db = SessionLocal()
+def estimate_cost(total_tokens: int | None) -> float | None:
+    if total_tokens is None:
+        return None
+    
+    unit_price_per_1k_tokens = 0.001
+    return round((total_tokens / 1000) * unit_price_per_1k_tokens, 6)
+
+
+def save_usage(
+    prompt: str, 
+    response: str, 
+    total_tokens: int | None = None,
+    user_id: int | None = None,
+    estimated_cost: float | None = None,
+    response_time_ms: int | None = None,
+    endpoint: str | None = None,
+):
+    db: Session = SessionLocal()
 
     log = AIUsageLog(
         prompt=prompt,
         response=response,
         total_tokens=total_tokens,
-        user_id=user_id
+        user_id=user_id,
+        estimated_cost=estimated_cost,
+        response_time_ms=response_time_ms,
+        endpoint=endpoint,
     )
 
     db.add(log)

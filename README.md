@@ -1,22 +1,24 @@
 # 🚀 fastapi-ai-core
 
-FastAPI-based backend for building AI-powered applications.
+FastAPI-based backend for building production-aware AI applications.
 
-This project focuses on **reliable backend behavior**, not just calling an AI API.
+This project is not just a thin wrapper around the OpenAI API.  
+It is designed as a practical backend foundation with context-controlled responses, streaming support, usage logging, estimated cost calculation, and response time monitoring.
 
 ---
 
 ## 🔥 Why This Exists
 
-Most "AI APIs" are simple wrappers around OpenAI.
+Many AI demos stop at "send prompt, get response."
 
 This project takes a different approach.
 
-It is built as a **backend foundation for real-world usage**, where:
+It is built as a backend foundation for more realistic usage, where:
 
-- Responses must be explainable
-- Incorrect answers must be avoided
-- System behavior must be predictable
+- responses should be grounded in known context
+- hallucinated answers should be reduced
+- request behavior should be observable
+- system behavior should remain predictable
 
 ---
 
@@ -27,38 +29,123 @@ It is built as a **backend foundation for real-world usage**, where:
 - SQLAlchemy 2.0
 - Alembic
 - OpenAI API
+- SQLite
 - Docker
 
 ---
 
 ## 📦 Features
 
-- AI text generation via OpenAI
-- Token usage logging (per request)
-- Database persistence (SQLite)
-- Service-layer separation
-- Dockerized environment
+- Synchronous AI responses via `/ai/test`
+- Streaming AI responses via `/ai/stream`
+- Token usage logging per request
+- Estimated cost calculation based on total token usage
+- Response time monitoring
+- Context-based answering with lightweight DB retrieval
+- File upload endpoint for adding context data
+- Dockerized local setup
 
 ---
 
 ## 🧠 Context-Based Answering (Lightweight RAG)
 
-Instead of relying on model knowledge, this system:
+Instead of relying purely on model knowledge, this system:
 
-- Retrieves relevant data from a database
-- Injects it into the prompt
-- Forces the model to answer **only from that context**
+- retrieves relevant data from a database
+- injects that data into the prompt
+- restricts the model to answer only from the retrieved context
 
-### Key behaviors
+This helps keep responses more predictable and reduces hallucinated answers.  
+It also reduces hallucinations by grounding responses in retrieved internal context.
 
-- Japanese query handling (simple tokenization + stop-word removal)
+### Retrieval Behavior
+
+- lightweight keyword-based matching
+- simple Japanese query handling
 - AND search with OR fallback
-- No-context fallback:
-  
-      "I don't know"
-      "No relevant information found."
+- no-context fallback for safer behavior
 
-This avoids hallucinated answers and keeps responses grounded.
+### Fallback Behavior
+
+If no relevant context is found, the system returns safe fallback responses such as:
+
+    "I don't know."
+    "No relevant information found."
+
+---
+
+## 🌊 Streaming Support
+
+The project includes a streaming endpoint for incremental AI output:
+
+- `/ai/stream`
+
+Streaming requests are also tracked in usage logs, including:
+
+- total tokens
+- estimated cost
+- response time
+- endpoint name
+
+This makes the backend more suitable for real AI product behavior, not just one-shot request/response demos.
+
+---
+
+## 🗃️ Usage Logging
+
+Each request can be stored with:
+
+- prompt
+- response
+- total_tokens
+- estimated_cost
+- response_time_ms
+- endpoint
+- user_id
+- created_at
+
+This enables:
+
+- cost visibility
+- latency monitoring
+- endpoint-level observability
+- usage analytics
+- future billing-oriented extensions
+
+---
+
+## 🧪 Initial Data Setup (Important)
+
+This project uses database-based context retrieval.
+
+If the database is empty, the AI may return:
+
+    "No relevant information found."
+
+To test the system properly, you should insert sample data first.
+
+You can do that by:
+
+- calling the `/seed` endpoint
+- uploading text files through `/ai/upload`
+- inserting records directly into the database
+
+Example context data:
+
+    FastAPI JWT errors are often caused by SECRET_KEY mismatches.
+    JWT validation failures commonly come from signature mismatch or expired tokens.
+
+---
+
+## 📤 File Upload
+
+You can upload text data through:
+
+- `POST /ai/upload`
+
+Uploaded content is stored in the database and becomes part of the retrieval context.
+
+This makes it easy to test FAQ-style or internal knowledge style use cases.
 
 ---
 
@@ -73,7 +160,7 @@ This avoids hallucinated answers and keeps responses grounded.
 
     OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
-### 3. Build & Run
+### 3. Build and Run
 
     docker build -t fastapi-ai-core .
     docker run -p 8000:8000 --env-file .env fastapi-ai-core
@@ -94,80 +181,48 @@ This avoids hallucinated answers and keeps responses grounded.
       "prompt": "Why does FastAPI JWT fail?"
     }
 
-### Natural Language Input
+### Example Response
 
-    "あのさ、FastAPIのJWTのエラーってなんで起きるの？"
-
-→ The system extracts keywords and returns an answer based on stored data.
-
----
-
-## 🧪 Initial Data Setup (Important)
-
-This project uses DB-based context retrieval.
-
-If the database is empty, the AI will return:
-
-    "No relevant information found."
-
-To test the system, you need to insert sample data.
-
-Example:
-
-    FastAPI JWT エラーは9割SECRET_KEYが原因
-
-You can add data via API or directly in the database.
-
----
-
-## 🗃️ Usage Logging
-
-Each request is stored with:
-
-- prompt
-- response
-- total_tokens
-- user_id
-- created_at
-
-This enables:
-
-- Cost tracking
-- Usage-based billing
-- Basic analytics
+    {
+      "result": "FastAPI JWT errors are often caused by SECRET_KEY mismatches."
+    }
 
 ---
 
 ## 🔐 Authentication (Current State)
 
-Temporary user injection:
+The current implementation uses mocked user context for demonstration purposes.
+
+Example:
 
     {"id": 1}
 
-Designed to be extended to:
+This is intentionally simple and designed to be extended later into:
 
 - JWT authentication
-- Role-based access
-- Multi-tenant usage tracking
+- role-based access control
+- multi-tenant usage tracking
 
 ---
 
 ## 💡 Use Cases
 
-- Internal AI tools
-- FAQ systems with controlled answers
-- SaaS AI backends
-- Cost-aware AI services
+- internal AI tools
+- FAQ systems with grounded answers
+- cost-aware AI services
+- AI-enabled SaaS backends
+- controlled-answer support systems
 
 ---
 
 ## 🚧 Roadmap
 
 - JWT authentication
+- token quota control
+- admin-facing usage analytics
 - Stripe integration
-- Token quota control
-- Streaming responses
-- Vector-based search (embeddings)
+- vector-based search (embeddings)
+- richer retrieval strategies
 
 ---
 
@@ -175,16 +230,18 @@ Designed to be extended to:
 
 This project prioritizes:
 
-- Predictable behavior over "smart" responses
-- Search reliability over model guessing
-- Simple architecture that can be extended later
+- predictable behavior over flashy responses
+- grounded answers over model guessing
+- backend observability over black-box AI behavior
+- simple architecture that can be extended later
 
 ---
 
-### Notes
+## Notes
 
-File upload endpoints depend on `python-multipart`.  
-Make sure it is installed via `requirements.txt`.
+File upload endpoints depend on `python-multipart`.
+
+Make sure it is included in `requirements.txt`.
 
 ---
 

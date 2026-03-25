@@ -20,12 +20,22 @@ async def generate_text(prompt: str) -> tuple[str, int]:
     return text, tokens
 
 async def stream_text(prompt: str):
-    stream = await client.responses.create(
+    stream = await client.chat.completions.create(
         model="gpt-4.1-mini",
-        input=prompt,
-        stream=True
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        stream=True,
+        stream_options={"include_usage": True},
     )
 
-    async for event in stream:
-        if event.type == "response.output_text.delta":
-            yield event.delta
+    total_tokens = None
+
+    async for chunk in stream:
+        if chunk.usage:
+            total_tokens = chunk.usage.total_tokens
+
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content, None
+
+    yield None, total_tokens

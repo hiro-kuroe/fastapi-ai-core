@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File
 from fastapi.responses import StreamingResponse
 
 from app.services.providers.openai_provider import stream_text, generate_text
-from app.services.ai_service import save_usage, search_context
+from app.services.ai_service import save_usage, search_context, estimate_cost
 from app.schemas.ai import AIRequest, AIResponse
 from app.dependencies.auth import get_current_user
 from app.db.session import SessionLocal
@@ -10,6 +10,7 @@ from app.models.ai_usage_log import AIUsageLog
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.document import Document
+import time
 
 router = APIRouter()
 
@@ -35,18 +36,25 @@ async def ai_test(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    start = time.perf_counter()
 
     context = search_context(request.prompt, db)
 
     if not context:
         result = "No relevant information found."
         tokens = 0
+        estimated_cost = estimate_cost(tokens)
+
+        response_time_ms = int((time.perf_counter() - start) * 1000)
 
         save_usage(
             request.prompt,
             result,
             tokens,
-            user_id=current_user["id"]
+            user_id=current_user["id"],
+            estimated_cost=estimated_cost,
+            response_time_ms=response_time_ms,
+            endpoint="/ai/test",
         )
 
         return AIResponse(result=result)
@@ -78,11 +86,17 @@ async def ai_test(
     if not result:
         result = "I don't know."
 
+    estimated_cost = estimate_cost(tokens)
+    response_time_ms = int((time.perf_counter() - start) * 1000)
+
     save_usage(
         request.prompt,
         result,
         tokens,
-        user_id=current_user["id"]
+        user_id=current_user["id"],
+        estimated_cost=estimated_cost,
+        response_time_ms=response_time_ms,
+        endpoint="/ai/test",
     )
 
     return AIResponse(result=result)
@@ -94,6 +108,7 @@ async def ai_stream(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    start = time.perf_counter()
 
     context = search_context(request.prompt, db)
 
@@ -114,15 +129,27 @@ async def ai_stream(
 
     async def generator():
         full_text = ""
+        total_tokens = None
 
-        async for chunk in stream_text(prompt):
-            full_text += chunk
-            yield chunk
+        async for chunk, usage_tokens in stream_text(prompt):
+            if chunk is not None:
+                full_text += chunk
+                yield chunk
+
+            if usage_tokens is not None:
+                total_tokens =usage_tokens
+        
+        estimated_cost = estimate_cost(total_tokens)
+        response_time_ms = int((time.perf_counter() - start) * 1000)
 
         save_usage(
             request.prompt,
             full_text,
-            user_id=current_user["id"]
+            total_tokens=total_tokens,
+            user_id=current_user["id"],
+            estimated_cost=estimated_cost,
+            response_time_ms=response_time_ms,
+            endpoint="/ai/stream",
         )
 
     return StreamingResponse(generator(), media_type="text/event-stream")
