@@ -18,8 +18,11 @@ router = APIRouter()
 @router.post("/seed")
 def seed(db: Session = Depends(get_db)):
     samples = [
-        "FastAPI JWT エラーは9割SECRET_KEYが原因",
-        "JWTの検証エラーはtokenの署名不一致が原因",
+        "FastAPI JWT errors are often caused by SECRET_KEY mismatches.",
+        "JWT validation failures commonly come from signature mismatch or expired tokens.",
+        "HTTP 401 means authentication failed, while HTTP 403 means the user is authenticated but not allowed.",
+        "In Docker environments, missing environment variables often break API integrations.",
+        "Usage logs help track token consumption, estimated cost, and response time."
     ]
 
     for text in samples:
